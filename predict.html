@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Review Prediction</title>
+</head>
+<body>
+    <h1>Review Prediction</h1>
+    <form action="/predict" method="post">
+        <label for="review_text">Enter a review:</label>
+        <br>
+        <textarea name="review_text" id="review_text" cols="30" rows="10"></textarea>
+        <br>
+        <button type="submit">Predict</button>
+    </form>
+    <br>
+    <h2>Prediction:</h2>
+    {% if prediction is not none %}
+    <p>{{ prediction }}</p>
+    {% endif %}
+    <hr>
+    <h2>Interactive Predictions:</h2>
+    <p>Use the sliders to adjust the review text and see how the predicted rating changes.</p>
+    <div>
+        <label for="review_sentiment">Review Sentiment</label>
+        <br>
+        <input type="range" min="1" max="5" value="3" class="slider" id="review_sentiment">
+        <span id="review_sentiment_value"></span>
+    </div>
+    <br>
+    <div>
+        <label for="review_length">Review Length</label>
+        <br>
+        <input type="range" min="1" max="500" value="250" class="slider" id="review_length">
+        <span id="review_length_value"></span>
+    </div>
+    <script>
+        const reviewSentimentSlider = document.getElementById("review_sentiment");
+        const reviewSentimentValue = document.getElementById("review_sentiment_value");
+        reviewSentimentValue.innerHTML = reviewSentimentSlider.value;
+
+        const reviewLengthSlider = document.getElementById("review_length");
+        const reviewLengthValue = document.getElementById("review_length_value");
+        reviewLengthValue.innerHTML = reviewLengthSlider.value;
+
+        reviewSentimentSlider.oninput = function() {
+            reviewSentimentValue.innerHTML = this.value;
+        }
+
+        reviewLengthSlider.oninput = function() {
+            reviewLengthValue.innerHTML = this.value;
+        }
+
+        function updatePrediction() {
+            const reviewText = "This product is " + reviewSentimentSlider.value + " stars. ";
+            const reviewLength = reviewLengthSlider.value;
+            const padding = " ".repeat(reviewLength - reviewText.length);
+            const inputText = reviewText + padding;
+            const xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    const prediction = this.responseText;
+                    document.getElementById("prediction").innerHTML = prediction;
+                }
+            };
+            xhr.open("POST", "/predict");
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            xhr.send("review_text=" + inputText);
+        }
+
+        setInterval(updatePrediction, 1000);
+    </script>
+    <br>
+    <h2>Raw Predictions:</h2>
+    {% if prediction_proba is not none %}
+    <p>{{ prediction_proba }}</p>
+    {% endif %}
+</body>
+</html>
